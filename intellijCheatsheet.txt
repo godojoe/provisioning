@@ -1,0 +1,63 @@
+Navigating
+Ctrl, arrow to move one word at a time
+Ctrl+Shift, arrow to SELECT one word at a time
+Ctrl+End, Ctrl+Home to move to end, start of file
+Ctrl+N, type part of class name or camel humps or wildcard
+Ctrl+Alt+left/right, go back/forward
+Ctrl+N, folder name/ to navigate to folder
+Ctrl+Alt+s : settings
+shift, shift: search anywhere
+Disable tabs: Ctrl+N, actions, tab place None
+Ctrl+e: recent files
+Ctrl+Shift+e: recent locations
+F2: navigate to next compilation error
+
+CamelHumps
+Type uppercase letters of camelcase class names and hit enter to being in full class name
+
+Moving text
+Alt+Shift+Down: move entire line down
+Ctrl+Shift+Down: move entire METHOD OR BLOCK down
+
+Duplicating and delting lines
+Ctrl+D to duplicate a line
+Ctrl+Y to delete a line
+
+View method parameter info
+Ctrl+P
+
+Block comments
+Select text, Ctrl+/
+or Ctrl+Shift+/
+
+Folding+Expanding blocks
+Ctrl+Numpad- , Ctrl+Numpad+
+
+Selecting
+Ctrl+w: extend selection
+Ctrl+Shift+w: shrink selection
+
+Code Completion
+Ctr+space
+Ctrl+shift+space: smart completion for method parameters, return statements
+Alt+Enter: add static import
+Alt+Insert: generate getters/ctors etc, and test methods, setUp, tearDown
+
+
+Postfix code templates
+Create null, not null, synchronized, try, for, for i in blocks
+type varname.null,varname.notnull, or varname.sync , varname.try, varname.for varname.fori, varname.forr
+expression.if for if block
+
+Refactoring
+Ctrl+Alt+l reformat selection or file
+Ctrl+Alt+o optimise imports
+Select optimise imports on the fly
+
+Langauge injection
+Alt+Enter to insert language
+Ctrl+F4 to exit language editor
+
+
+
+
