@@ -7,7 +7,7 @@
 
 
 #echo 'update os...'
-#yum update -y --exclude=kernel
+yum update -y --exclude=kernel
 
 echo 'set key layout...'
 echo "loadkeys dk >> /dev/null 2>&1" > /etc/profile.d/keyboard.sh
