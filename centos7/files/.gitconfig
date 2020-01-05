@@ -1,0 +1,5 @@
+[user]
+	name = godojoe
+	email = gj@example.com
+[credential]
+	helper = manager
