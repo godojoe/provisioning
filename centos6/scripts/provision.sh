@@ -21,5 +21,5 @@ cp /etc/mc/mc.keymap /home/vagrant/.config/mc
 sed -i 's/.*CdParentSmart.*/CdParentSmart = backspace/g' /home/vagrant/.config/mc/mc.keymap
 
 echo 'installing GNOME...'
-yum groupinstall -y "GNOME Desktop" "Graphical Administration Tools"
-ln -sf /lib/systemd/system/runlevel5.target /etc/systemd/system/default.target
+yum groupinstall -y "X Window System" "Desktop" "General Purpose Desktop"
+sed -i 's/id:3:initdefault/id:5:initdefault/g' /etc/inittab
