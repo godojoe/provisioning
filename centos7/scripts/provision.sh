@@ -7,16 +7,20 @@
 
 
 #echo 'update os...'
-yum update -y --exclude=kernel
-
-echo 'set key layout...'
-echo "loadkeys dk >> /dev/null 2>&1" > /etc/profile.d/keyboard.sh
+yum update -y
 
 echo 'install epel...'
 yum install -y epel-release
 
+echo 'installing GNOME...'
+yum groupinstall -y "GNOME Desktop" "Graphical Administration Tools" "Server with GUI" --setopt=group_package_types=mandatory,default,optional
+yum remove -y gnome-initial-setup
+systemctl isolate graphical.target
+systemctl set-default graphical.target 
+systemctl start graphical.target 
+
 echo 'install my packages...'
-yum install -y kbd git vim-enhanced mc-4.8.7 nmap htop xrdp tigervnc-server
+yum install -y git vim-enhanced mc-4.8.7 nmap htop xrdp tigervnc-server
 
 echo 'Enable Remote Desktop...'
 systemctl start xrdp
@@ -27,9 +31,5 @@ mkdir /home/vagrant/.config && mkdir /home/vagrant/.config/mc
 cp /etc/mc/mc.keymap /home/vagrant/.config/mc
 sed -i 's/.*CdParentSmart.*/CdParentSmart = backspace/g' /home/vagrant/.config/mc/mc.keymap
 
-echo 'installing GNOME...'
-yum groupinstall -y "GNOME Desktop" "Graphical Administration Tools" "Server with GUI" --setopt=group_package_types=mandatory,default,optional
-systemctl set-default graphical.target
-
-echo mounting volumes
-mount -t vboxsf -o uid=1000,gid=1000 vagrant /vagrant
+echo 'set key layout...'
+sed -i 's/^KEYMAP="us"$/KEYMAP="dk"/' /etc/vconsole.conf
