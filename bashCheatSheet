@@ -1,0 +1,73 @@
+echo supports escape
+echo -e enables \n newlines eg
+echo -e "hi \n there \n How are you"
+quotes not needed
+echo hello world 
+
+grep -i searchterm: case-insensitive
+egrep is grep -e
+fgrep is grep -f
+
+yum:
+upgrade
+update
+reinstall
+search
+info
+remove
+
+rpm:
+-q query
+-i install
+-e erase
+
+awk with space delim, reverse
+ps -ef|awk -F" " '{print $2}'|rev
+
+redirect when find-ing or when errors expected
+find / -name filename 2>/dev/null
+
+
+vim
+line numbers: (set number) :se nu
+:1,$ implies entire file (all lines)
+
+case insensitive: 
+:1,$s/search/replace/gi , or
+:%s/search/replace/gi
+
+delete to current line .
+:1,.g/pattern/d 
+delete lines 5-8
+:5,8d 
+
+tar
+peek inside, list
+tar -tf file.tar.gz
+preserve permissions on -x or -x7
+-p 
+
+bzip2 to zip
+bunzip2 to unzip
+
+/var/log/messages 
+
+nmtui network manager UI
+
+name lookup
+nslookup, or dig
+
+firewall open port
+iptables -I INPUT 1 -p tcp --dport 80 - j ACCEPT 
+
+partition list
+fdisk -l
+cat /proc/partitions
+partprobe : force reread of partition table by kernel
+lsblk -o name,label,size gives tree view
+blkid gives list
+
+mkfs.xfs -L label /dev/sda1 formats sda1 as xfs  
+
+mount -a, after editing /etc/fstab, mounts new partition
+mount lists mount points
