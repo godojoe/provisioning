@@ -58,7 +58,7 @@ name lookup
 nslookup, or dig
 
 firewall open port
-iptables -I INPUT 1 -p tcp --dport 80 - j ACCEPT 
+iptables -I INPUT 1 -p tcp --dport 80 -j ACCEPT 
 
 partition list
 fdisk -l
