@@ -57,8 +57,14 @@ nmtui network manager UI
 name lookup
 nslookup, or dig
 
+dhclient
+run dhcp
+
 firewall open port
 iptables -I INPUT 1 -p tcp --dport 80 -j ACCEPT 
+or 
+firewall-cmd --permanent --add-port=21/tcp 
+(requires firewalld service to be running)
 
 partition list
 fdisk -l
@@ -71,3 +77,29 @@ mkfs.xfs -L label /dev/sda1 formats sda1 as xfs
 
 mount -a, after editing /etc/fstab, mounts new partition
 mount lists mount points
+
+SELinux
+see security context of files:
+ls -lZ
+unconfined_u:object_r:user_home_t:s0 
+user:role:type:level 
+
+secondary check, after DAC
+SELinux mode
+getenforce, setenforce, ot sestatus
+
+semanage: control SELinux policy
+
+
+useful tool:
+yum install selinux-policy-devel
+,install man pages, so that, for example:
+man passwd_selinux 
+is possible
+
+chcon
+changes context of a file, eg chcon -t new_context_label file
+
+restorecon - restore to default context
+
+bin_t on .exe is powerful, puts process into unconfined_t

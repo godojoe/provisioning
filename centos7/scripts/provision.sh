@@ -18,6 +18,7 @@ yum remove -y gnome-initial-setup
 systemctl isolate graphical.target
 systemctl set-default graphical.target 
 systemctl start graphical.target 
+yum install -y gcc perl kernel-devel bzip2
 
 echo 'install my packages...'
 yum install -y git vim-enhanced mc-4.8.7 nmap htop xrdp tigervnc-server
