@@ -8,24 +8,111 @@ grep -i searchterm: case-insensitive
 egrep is grep -e
 fgrep is grep -f
 
+sed : print line number 9
+sed -n 9p /etc/ssh/sshd_config
+
+sed: delete line
+sed -i -e '2d' ~/myfile
+
+
+grep for ip address:
+grep '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}'
+
+awk works better than cut at extracting whitespace seperated fields:
+ ps aux|awk '{ print $4}'
+ps can sort output directly, eg
+ps aux --sort -%mem (descending)
+ps aux --sort %cpu (ascending)
+ps -ef shows precise command args 
+ps fax - shows tree
+pgrep dd shows pids of all 'dd' processes
+uptime, top show load average
+lscpu shows core count
+tuned daemon, tuned-adm for switching perf profile, eg
+tuned-adm list
+tuned-adm recommend
+tuned-adm profile throughput-performance
+
+systemd
+systemctl list-dependencies mytarget - get mytarget deps
+systemctl list-dependencies --reverse mytarget- get services that are dependent on mytarget
+systemctl --type=service : show active service units
+systemctl list-units --type=service : show all service units defined
+systemctl list-units --type=service --all : show  active and inactive service units
+systemctl --failed --type=service : show services that have failed
+systemctl status -l your.service : show detailed info about your.service
+systemctl show myservice: show unit options
+systemctl cat myservice.service  - show unit file for myservice
+systemctl edit myservice.service - edit unit file in nano
+systemctl daemon-reload - systemd re-reads  unit files, recreates dependency tree. sockets stay open
+
+[Unit]
+Requires=myservice, will ensure myservice starts first
+
+cron
+user specific files created with crontab -e stored in /car/spool/cron/$USER
+don't edit /etc/crontab directly - place files in /etc/cron.d
+cron relies on anacron service. Configured via /etc/anacrontab, which reads /etc/cron.hourly, /etc/cron.daily, /etc/cron.weekly files
+/etc/cron.allow *or* /etc/cron.deny files (not both) configure permissions to use cron
+atd daemon runs at tasks
+check at queue with atq
+passwords
+chage sets attributes interactively 
+
+Logging
+journalctl -u myservice, for systemd managed services
+/var/log/messages, /var/log/audit/audit.log/audit/audit.log for SELinux
+logger, to write directly to /var/log/messages via rsyslogd 
+
+
 yum:
 upgrade
 update
 reinstall
+group list
 search
-info
+info, and group info
 remove
+createrepo
+repolist
+provides */file
+history undo <>nn
+
+createrepo - needs to be installed7
+
+
+modules/streams
+yum module info perl
+yum module install php:7.2
+yum module install perl/minimal (minimal profile of latest perl application stream)
+yum module enable perl:5.24
+yum distro-sync - update dependencies
+
 
 rpm:
--q query
+-q query (or, repoquery, without --scripts available)
 -i install
 -e erase
+
+eg rpm -qf /bin/ls - query which package includes ls
+rpm -qi dnsmasq - query pacakge info from rpm database
+rpm -ql dnsmasq - list all files in package
+rpm -qd dnsmasq - query doc files in package
+rpm -qc dnsmasq - query config files in package
+rpm -qR dnsmasq - query dnsmasq dependencies
+rpm -qp --scripts package_name.rpm - list scripts in .rpm package prior to installation
+rpm -q --scripts package - query scripts in package
 
 awk with space delim, reverse
 ps -ef|awk -F" " '{print $2}'|rev
 
 redirect when find-ing or when errors expected
 find / -name filename 2>/dev/null
+
+repeat commands
+!first letters
+or 
+Ctrl-r searches backwards
 
 
 vim
@@ -103,3 +190,5 @@ changes context of a file, eg chcon -t new_context_label file
 restorecon - restore to default context
 
 bin_t on .exe is powerful, puts process into unconfined_t
+
+setsebool takes effect immediately, but does not persist across reboots (unless with -P)
