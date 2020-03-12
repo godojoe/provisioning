@@ -21,7 +21,7 @@ grep '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}'
 awk works better than cut at extracting whitespace seperated fields:
  ps aux|awk '{ print $4}'
 ps can sort output directly, eg
-ps aux --sort -%mem (descending)
+ps aux --sort -%mem (descending)    (kernel threads in [] brackets)
 ps aux --sort %cpu (ascending)
 ps -ef shows precise command args 
 ps fax - shows tree
@@ -49,6 +49,10 @@ systemctl daemon-reload - systemd re-reads  unit files, recreates dependency tre
 [Unit]
 Requires=myservice, will ensure myservice starts first
 
+targets, wants:
+ls /etc/systemd/system/multi-user.target.wants displays all the symlink wants for a target. Services install themselves here when enabled¨. 
+That's all that systemctl enable does: Creates symlink
+
 cron
 user specific files created with crontab -e stored in /car/spool/cron/$USER
 don't edit /etc/crontab directly - place files in /etc/cron.d
@@ -61,9 +65,35 @@ chage sets attributes interactively
 
 Logging
 journalctl -u myservice, for systemd managed services
+journalctl -f follows the log
+journalctl -p err - errors only
+journalctl -k shows kernel messages (note, dmesg shows time relative to boot time, journalctl show clock time)
+journalctl --since yesterday
+journalctl _SYSTEMD_UNIT=sshd.service
 /var/log/messages, /var/log/audit/audit.log/audit/audit.log for SELinux
 logger, to write directly to /var/log/messages via rsyslogd 
+logger -p myservice.debug logs at debug level (-p priority)
+rsyslogd configured by /etc/rsyslogd.conf, and /etc/rsyslog.d/
+hostnamectl status shows systeminfo, more than uname -a does
+systemd-udevd service loads hardware
+udevadm monitor shows hardware discovery in realtime. Each new piece of detected hardware produces /sys entry
+modprobe and modprobe -r to load/unload module
+lspci to list pic devices. lspci -k to include module info
+/etc/modprobe.d/ file to specify module parameters
+eg: echo "options cdrom debug=1" >> /etc/modprobe.d/cdrom.conf
+parameter names from modinfo
 
+sample config in /etc/rsyslog.d: 
+*.=info /var/log/message.info
+then systemctl restart rsyslogd
+then logger -p user.info Hello
+
+/etc/sysconfig/rsyslog options appear to be deprecated
+/etc/logrotate.conf stores log rotation settings
+/etc/systemd/journal.conf configures persistance of the journal. If Storage=persistant or auto , 
+and /var/log/journal exists and is writable by systemd-journal, journald logs will be persisted:
+chown root:systemd-journal /var/log/journal (set group ownership)
+chmod 2755 /var/log/journal (set guid)
 
 yum:
 upgrade
@@ -154,16 +184,54 @@ firewall-cmd --permanent --add-port=21/tcp
 (requires firewalld service to be running)
 
 partition list
+fdisk for MBR partitions
+gdisk for GPT partitions (> 2TiB)
 fdisk -l
-cat /proc/partitions
+or fdisk interactively: p
+check total sectors on disk, versus end sector of last partition, to see if space available
+cat /proc/partitions to verify new partition table written to in-memory kernel partition table
 partprobe : force reread of partition table by kernel
 lsblk -o name,label,size gives tree view
-blkid gives list
+blkid gives list, with UUIDs or labels for mounting
 
 mkfs.xfs -L label /dev/sda1 formats sda1 as xfs  
-
+mkswap /dev/sda3 formats sda3 as swap space
+free -m shows free memory in MiB
+swapon /dev/sda3 adds swap partition to memory
+tune2fs for setting ext4 file system properties
+xfs_admin -L mylabel for setting label on XFS filesystem 
 mount -a, after editing /etc/fstab, mounts new partition
 mount lists mount points
+
+create logical volume:
+lvcreate -n lvdata -l 50%FREE vgdata
+vgextend vgdata /dev/sda5 converts /dev/sda5 to PV, adds to vg vgdata
+lvextend -r -l +50%FREE /dev/vgdata/lvdata resizes lvdata AND (-r) resizes the filesystem on it
+
+stratis
+stratis-cli and stratisd yum packages
+systemctl enable --now stratisd
+stratis pool create mypool /dev/sdb adds entire disk to pool
+stratis pool list 
+stratis fs create mypool stratis1 creates XFS filesystem on entire pool, assigns it a UUIDs
+stratis fs list
+edit fstab:
+UUID=uuid from blkid /mountpoint xfs defaults,x-systemd.requires=stratisd.service 0 0 (check man systemd.mount)
+to take a snapshot,
+stratis filesystem snapshot mypool stratis1 stratis1-snapshotname (stratis1 is the fs name from fs create) 
+
+VDO
+Sample systemd mount file at /usr/share/doc/vdo/examples/systemd/VDO.mount.example
+copy to /etc/systemd/system/mymountpoint.mount
+
+yum install -y vdo kmod-kvdo
+create VD device
+vdo create --name=vd01 --device=/dev/sdb --vdoLogicalSize=1T
+mkfs.xfs -K /dev/mapper/vd01 (-K is an optimisation related to empty block handling)
+cp /usr/share/doc/vdo/examples/systemd/VDO.mount.example /etc/systemd/system/vd01.mount
+edit What and Where settings in mount file
+systemct enable --now vd01.mount
+vdostats --human-readable
 
 SELinux
 see security context of files:
