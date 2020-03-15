@@ -77,7 +77,7 @@ journalctl -k shows kernel messages (note, dmesg shows time relative to boot tim
 journalctl --since yesterday
 journalctl _SYSTEMD_UNIT=sshd.service
 journalctl -xb for debugging previous boot. -x adds explanatory messages to log
-/var/log/messages, /var/log/audit/audit.log/audit/audit.log for SELinux
+/var/log/messages, /var/log/audit/audit.log for SELinux
 logger, to write directly to /var/log/messages via rsyslogd 
 logger -p myservice.debug logs at debug level (-p priority)
 rsyslogd configured by /etc/rsyslogd.conf, and /etc/rsyslog.d/
@@ -184,11 +184,21 @@ nslookup, or dig
 dhclient
 run dhcp
 
-firewall open port
-iptables -I INPUT 1 -p tcp --dport 80 -j ACCEPT 
-or 
-firewall-cmd --permanent --add-port=21/tcp 
-(requires firewalld service to be running)
+Firewalld
+firewall-cmd --get-default-zone
+firewall-cmd --get-zones
+firewall-cmd --get<tab> works
+firewall-cmd --get-services (all defined services)
+firewall-cmd --list-services (for current zone)
+firewall-cmd --list-all (currently running config for current service)
+firewall-cmd --list-all-zones (current config across all zones)
+firewall-cmd --add-service=vnc-server (should show up when running --list-all. Non-permanent, does not survive restart firewalld)
+firewall-cmd --add-service=vnc-server --permanent
+firewall-cmd --remove-service vnc-server --permanent
+firewall-cmd --add-port=2021/tcp --permanent (NOT recommended: adds port explicitly, if no service defines the port)
+firewall-cmd --add-interface=en01 --zone=public
+firewall-cmd --add-source=192.168.0.0/24
+
 
 partition list
 fdisk for MBR partitions
@@ -298,8 +308,14 @@ mandb
 bin_t on .exe is powerful, puts process into unconfined_t
 
 setsebool takes effect immediately, but does not persist across reboots (unless with -P)
-getsebool and semange boolean -l lists booleans
+getsebool and semanage boolean -l lists booleans. 
+semanage shows runtime vs permanent setting
+/var/log/audit/audit.log AVC messages for debugging
+avs: denied {map} means process lacked rights to read FILE attributes
+comm : 'command'
 
+sealert -a /var/log/audit/audit.log will list possible fixes to avc errors. 
+(might need to be installed with yum install setroubleshoot-server, which produces the messages)
 
 Troubleshooting
 hit 'e' t boot time to edit kernel boot params
