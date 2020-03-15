@@ -46,12 +46,18 @@ systemctl cat myservice.service  - show unit file for myservice
 systemctl edit myservice.service - edit unit file in nano
 systemctl daemon-reload - systemd re-reads  unit files, recreates dependency tree. sockets stay open
 
+systemctl mask myservice - myservice no longer eligible for starting ('A masked service is one whose unit file is a symlink to /dev/null. This makes it "impossible" to load the service, even if it is required by another, enabled service.' 
+
 [Unit]
 Requires=myservice, will ensure myservice starts first
 
 targets, wants:
 ls /etc/systemd/system/multi-user.target.wants displays all the symlink wants for a target. Services install themselves here when enabled¨. 
 That's all that systemctl enable does: Creates symlink
+
+systemctl --type=target lists all loaded targets (add --all to show all targets)
+systemctl isolate yourtarget.target to switch to that target
+systemctl set-default to choose default target
 
 cron
 user specific files created with crontab -e stored in /car/spool/cron/$USER
@@ -70,6 +76,7 @@ journalctl -p err - errors only
 journalctl -k shows kernel messages (note, dmesg shows time relative to boot time, journalctl show clock time)
 journalctl --since yesterday
 journalctl _SYSTEMD_UNIT=sshd.service
+journalctl -xb for debugging previous boot. -x adds explanatory messages to log
 /var/log/messages, /var/log/audit/audit.log/audit/audit.log for SELinux
 logger, to write directly to /var/log/messages via rsyslogd 
 logger -p myservice.debug logs at debug level (-p priority)
@@ -233,7 +240,17 @@ edit What and Where settings in mount file
 systemct enable --now vd01.mount
 vdostats --human-readable
 
+GRUB
+config at /etc/default/grub (rhgb quiet options can be removed to diagnose kernel via output during bootup. Also check  man 7 bootparam for more )
+also /etc/grub.d
+these config files produce
+/boot/grub2/grub.cfg (generated during Linux installation and regenerated when a new kernel is installed.)
+Create new grub.cfg via 
+grub2-mkconfig -o /boot/grub2/grub.cfg
+
+
 SELinux
+enable/disable via /etc/sysconfig/selinux, or setenforce
 see security context of files:
 ls -lZ
 unconfined_u:object_r:user_home_t:s0 
@@ -241,22 +258,109 @@ user:role:type:level
 
 secondary check, after DAC
 SELinux mode
-getenforce, setenforce, ot sestatus
+getenforce, setenforce, ot sestatus -v
 
 semanage: control SELinux policy
+eg: set ssh port to 2022
+semanage port -a -t ssh_port_t -p tcp 2022
+(also needs firewall-cmd --add-port=2022/tcp --permanent)
+ssh as client:
+save certificate password
+Before connecting to remote
+ssh-agent /bin/bash
+ssh-add
+connect, enter cert password, which gets cached
 
-
-useful tool:
-yum install selinux-policy-devel
-,install man pages, so that, for example:
-man passwd_selinux 
-is possible
 
 chcon
-changes context of a file, eg chcon -t new_context_label file
+changes context of a file, eg chcon -t new_context_label file, 
+BUT NOT to policy!
+Changes lost when file system relabelled (which can happen unexpectedly - for example upon reboot after making fs changes with selinux disabled) - so AVOID!
 
-restorecon - restore to default context
+SEManage
+semanage fcontext: make policy changes to FILE. man semanage-fcontext, search for 'example', to see regex example.
+Literally just copy out the example 'semanage fcontext -a -t httpd_sys_content_t "/web(/.*)?"'
+after running semanage fcontext, 
+restorecon -R -v to apply policy to file system (relabel - restore to default context)
+restorecon - useful for fixing busted labels, eg, after moving a file
+To relabel the whole filesystem:
+restorecon -Rv /, or create /.autorelabel, for reboot
+
+For picking labels to apply, sepolicy and man -k selinux is your friend
+Installing SELinux man pages
+man -k _selinux typically only has a few man pages
+yum provides */sepolicy reveals that policycoreutils-devel is the needed package
+yum -y install policycoreutils-devel
+To install the man pages:
+sepolicy manpage -a -p /usr/share/man/man8
+mandb
 
 bin_t on .exe is powerful, puts process into unconfined_t
 
 setsebool takes effect immediately, but does not persist across reboots (unless with -P)
+getsebool and semange boolean -l lists booleans
+
+
+Troubleshooting
+hit 'e' t boot time to edit kernel boot params
+rd.break kernel param breaks while in initramfs stage - before root password needed
+init=/bin/bash start shell immediately after loading kernel and initrd
+systemd.unit=emergency.target or rescue.target, needs root pass
+
+chroot /mnt/sysimage to point a rescue system loaded from rescue disk, to your installation
+Then your / fs is located under /mnt/sysimage
+
+GRUB can be re-installed using grub2-install /dev/sda
+dracut can be used for creating a new initramfs: dracut --force to overwrite existing ramfs. /etc/dracut.conf for kernel features
+
+'Give root password for maintenance' if there are fs issues - from fsck checking /etc/fstab
+journalctl -xb for debugging previous boot. -x adds explanatory messages to log
+mount -o remount,rw / to remount root fs in rw mode. /etc/fstab errors will be displayed
+
+Resetting root password
+Boot kernel with rd.break
+make /sysroot writeable:
+mount -o remount,rw /sysroot
+chroot /sysroot
+passwd root
+force SELinux to relabel: echo "" >> /sysroot/.autorelabel (or loadpolicy -i ; chcon -t shadow_t /etc/shadow; if ONLY shadow file needs relabelling)
+
+bash tricks
+$# arg count
+"$@" all arguments: array for loops
+read to get user input
+test command also written as []
+[ -z $1] -> test if var1 is on-existant : -z checks for non-existance : 'zero-length'
+never use spaces when defining variables.
+var=5
+bash -x myscript.sh for debugging
+
+install mailx and postfix service to get mail working - systemctl start postfix, 
+and send mail with subject like this
+mail -s "mysubject" root <.
+arithmetic expressions like this
+VAR=$(($MYINTVAR*5))
+USE lowercase OR MixedCase VARIABLES IN YOUR SCRIPT
+Sample do until
+#!/bin/bash
+Seconds=$(($1*60))
+echo $Seconds to countdown
+
+until [ $Seconds -eq 0 ]
+do
+        sleep 1
+        Seconds=$(( Seconds - 1 ))
+        echo There are $Seconds seconds remaining
+done
+exit 0
+
+Sample if elif
+#!/bin/bash
+if [ "one" = $1 ]
+then
+        touch /tmp/one
+elif [ "two" = $1 ]
+then
+        mail -s "two" root <. >> /dev/null
+fi
+
