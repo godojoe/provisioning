@@ -192,10 +192,14 @@ firewall-cmd --get-services (all defined services)
 firewall-cmd --list-services (for current zone)
 firewall-cmd --list-all (currently running config for current service)
 firewall-cmd --list-all-zones (current config across all zones)
-firewall-cmd --add-service=vnc-server (should show up when running --list-all. Non-permanent, does not survive restart firewalld)
-firewall-cmd --add-service=vnc-server --permanent
+firewall-cmd --add-service=vnc-server (should show up when running --list-all. Non-permanent, does not survive restart firewalld, or firewall-cmd --
+reload)
+firewall-cmd --add-service=vnc-server --permanent  (if service already exists)
 firewall-cmd --remove-service vnc-server --permanent
 firewall-cmd --add-port=2021/tcp --permanent (NOT recommended: adds port explicitly, if no service defines the port)
+To add a new service, copy an existing xml config from /usr/lib/firewalld/services/ftp.xml to /etc/firewalld/services/ and reload: should
+then be visible via firewall-cmd --get-services
+Service xml jsut defines port, description, and optionals kernel modules to load to request addtional ports
 firewall-cmd --add-interface=en01 --zone=public
 firewall-cmd --add-source=192.168.0.0/24
 
@@ -271,6 +275,7 @@ SELinux mode
 getenforce, setenforce, ot sestatus -v
 
 semanage: control SELinux policy
+part of policycoreutils-python-utils package (find with yum provides /*semanage )
 eg: set ssh port to 2022
 semanage port -a -t ssh_port_t -p tcp 2022
 (also needs firewall-cmd --add-port=2022/tcp --permanent)
@@ -379,4 +384,49 @@ elif [ "two" = $1 ]
 then
         mail -s "two" root <. >> /dev/null
 fi
+
+NFS
+yum install nfs-utils
+showmount -e server2.example.com
+Mount:
+mount server2.example.com:/ /mnt
+Mount via fstab
+server1:/share /nfs/mount/point nfs sync 0 0
+
+Mounting via autofs
+yum install autofs
+echo "/nfsdata /etc/auto.nfsdata" >> /etc/auto.master
+echo "files -rw server2:/nfsdata" >> /etc/auto.nfsdata
+systemctl enable --now autofs
+Wildcard(Home) mounting via autofs
+echo "/users /etc/auto.users" >> /etc/auto.master
+echo "* -rw server2:/users/&" >> /etc/auto.users
+systemctl restart autofs
+cd /users/usser1 should work
+
+CIFS
+yum install -y cifs-utils samba-client
+test connectivity:
+smbclient -L server2.example.com -U username
+mount -t cifs -o user=student //server2.example.com/sambashare /mnt
+(might need -o vers=2.0 or greater)
+
+date
+set time:  sudo date -s 20:54
+hwclock --systohc
+hwclock --hctosys
+more general command, for all aspects of time: timedatectl
+enable NTP: timedatectl set-ntp 1
+NTP configured via /etc/chrony.conf
+Timezones - set via tzselect
+(or create symlink: ln -sf /usr/share/zoneinfo/America/Los_Angeles /etc/localtime.
+or use timedatectl)
+Stratum, configured for chronyd/NTP service: lower value more -> reliable server 
+Create NTP client: add to /etc/chrony.conf
+server yourntpserver.example.com
+Create NTP server:
+add to /etc/chrony.conf:
+allow 192.168.0.0/16
+local stratum 8
+restart chronyd  and add ntp to firewall zone
 
