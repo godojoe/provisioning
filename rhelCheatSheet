@@ -60,12 +60,13 @@ systemctl isolate yourtarget.target to switch to that target
 systemctl set-default to choose default target
 
 cron
-user specific files created with crontab -e stored in /car/spool/cron/$USER
+user specific files created with crontab -e stored in /var/spool/cron/$USER
 don't edit /etc/crontab directly - place files in /etc/cron.d
 cron relies on anacron service. Configured via /etc/anacrontab, which reads /etc/cron.hourly, /etc/cron.daily, /etc/cron.weekly files
 /etc/cron.allow *or* /etc/cron.deny files (not both) configure permissions to use cron
 atd daemon runs at tasks
 check at queue with atq
+
 passwords
 chage sets attributes interactively 
 
@@ -79,13 +80,13 @@ journalctl _SYSTEMD_UNIT=sshd.service
 journalctl -xb for debugging previous boot. -x adds explanatory messages to log
 /var/log/messages, /var/log/audit/audit.log for SELinux
 logger, to write directly to /var/log/messages via rsyslogd 
-logger -p myservice.debug logs at debug level (-p priority)
+logger -p daemon.debug logs at debug level (-p priority)
 rsyslogd configured by /etc/rsyslogd.conf, and /etc/rsyslog.d/
 hostnamectl status shows systeminfo, more than uname -a does
 systemd-udevd service loads hardware
 udevadm monitor shows hardware discovery in realtime. Each new piece of detected hardware produces /sys entry
 modprobe and modprobe -r to load/unload module
-lspci to list pic devices. lspci -k to include module info
+lspci to list pci devices. lspci -k to include module info
 /etc/modprobe.d/ file to specify module parameters
 eg: echo "options cdrom debug=1" >> /etc/modprobe.d/cdrom.conf
 parameter names from modinfo
@@ -168,7 +169,7 @@ delete lines 5-8
 tar
 peek inside, list
 tar -tf file.tar.gz
-preserve permissions on -x or -x7
+preserve permissions on -x or -x
 -p 
 
 bzip2 to zip
@@ -243,7 +244,8 @@ stratis filesystem snapshot mypool stratis1 stratis1-snapshotname (stratis1 is t
 
 VDO
 Sample systemd mount file at /usr/share/doc/vdo/examples/systemd/VDO.mount.example
-copy to /etc/systemd/system/mymountpoint.mount
+copy to /etc/systemd/system/my
+mountpoint.mount
 
 yum install -y vdo kmod-kvdo
 create VD device
@@ -279,12 +281,6 @@ part of policycoreutils-python-utils package (find with yum provides /*semanage 
 eg: set ssh port to 2022
 semanage port -a -t ssh_port_t -p tcp 2022
 (also needs firewall-cmd --add-port=2022/tcp --permanent)
-ssh as client:
-save certificate password
-Before connecting to remote
-ssh-agent /bin/bash
-ssh-add
-connect, enter cert password, which gets cached
 
 
 chcon
@@ -429,4 +425,11 @@ add to /etc/chrony.conf:
 allow 192.168.0.0/16
 local stratum 8
 restart chronyd  and add ntp to firewall zone
+
+ssh as client:
+save certificate password
+Before connecting to remote
+ssh-agent /bin/bash
+ssh-add
+connect, enter cert password, which gets cached
 
